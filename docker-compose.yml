@@ -1,0 +1,65 @@
+version: '3'
+
+services:
+###> doctrine/doctrine-bundle ###
+  php:
+    container_name: template_php
+    build:
+      context: .docker/php
+      dockerfile: Dockerfile
+    volumes:
+      - ./:/var/www/
+    restart: unless-stopped
+    tty: true
+    networks:
+      - symfony
+
+
+  database:
+    image: postgres:11-alpine
+    container_name: template_postgre
+    environment:
+      POSTGRES_DB: app
+      POSTGRES_PASSWORD: ChangeMe
+      POSTGRES_USER: symfony
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-app-data:/var/lib/postgresql/data
+    networks:
+      - symfony
+
+  nginx:
+    build:
+      context: .docker/nginx
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    tty: true
+    volumes:
+      - ./:/var/www
+      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/
+    ports:
+      - "80:80"
+    networks:
+      - symfony
+  mariaDB:
+    image: 'mariadb:latest'
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345678
+      MYSQL_DATABASE: main
+      MYSQL_USER: root
+    ports:
+      - '3306'
+    volumes:
+      - db-data:/var/lib/postgresql/data:rw
+###< doctrine/doctrine-bundle ###
+
+volumes:
+  db-data:
+  #    driver: local
+  postgres-app-data:
+  #    driver: local
+
+networks:
+  symfony:
+    driver: bridge
