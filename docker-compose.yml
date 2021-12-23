@@ -6,53 +6,39 @@ services:
     container_name: template_php
     build:
       context: .docker/php
-      dockerfile: Dockerfile
     volumes:
       - ./:/var/www/
-    restart: unless-stopped
-    tty: true
-    networks:
-      - symfony
-
-
-  database:
-    image: postgres:11-alpine
-    container_name: template_postgre
-    environment:
-      POSTGRES_DB: app
-      POSTGRES_PASSWORD: ChangeMe
-      POSTGRES_USER: symfony
-    ports:
-      - "5433:5432"
-    volumes:
-      - postgres-app-data:/var/lib/postgresql/data
     networks:
       - symfony
 
   nginx:
+    container_name: nginx
     build:
-      context: .docker/nginx
-      dockerfile: Dockerfile
+     context: .docker/nginx
     restart: unless-stopped
     tty: true
     volumes:
       - ./:/var/www
-      - ./docker/nginx/nginx.conf:/etc/nginx/conf.d/
     ports:
-      - "80:80"
+      - "8080:80"
+      - "4430:443"
     networks:
       - symfony
-  mariaDB:
-    image: 'mariadb:latest'
-    environment:
-      MYSQL_ROOT_PASSWORD: 12345678
-      MYSQL_DATABASE: main
-      MYSQL_USER: root
-    ports:
-      - '3306'
+
+  mysql:
+    image: 'mysql:8.0'
+    command: --default-authentication-plugin=mysql_native_password
     volumes:
-      - db-data:/var/lib/postgresql/data:rw
-###< doctrine/doctrine-bundle ###
+      - .db_data:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: '12345678'
+      MYSQL_DATABASE: 'main'
+      MYSQL_USER: 'mysql'
+    ports:
+      - 3306:3306
+    networks:
+      - symfony
+
 
 volumes:
   db-data:
@@ -62,4 +48,3 @@ volumes:
 
 networks:
   symfony:
-    driver: bridge

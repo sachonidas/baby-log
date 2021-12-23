@@ -1,45 +1,35 @@
-FROM php:7.4.6-fpm-alpine3.11
+FROM php:8.0-fpm-buster
 
-WORKDIR /var/www
+COPY local.ini /usr/local/etc/php/conf.d/docker-php-config.ini
 
-RUN set -ex \
-  && apk --no-cache --update add \
-  postgresql-dev \
-  postgresql \
-  libpng-dev \
-  libjpeg-turbo-dev \
-  freetype-dev \
-  rabbitmq-c rabbitmq-c-dev \
-  zip \
-  jpegoptim optipng pngquant gifsicle \
-  vim \
-  unzip \
-  git \
-  curl \
-  exiftool \
-  oniguruma-dev \
-  libzip-dev \
-  php7-pecl-amqp \
-  php7-pecl-redis \
-  redis
+RUN apt-get update && apt-get install -y \
+    gnupg \
+    g++ \
+    procps \
+    openssl \
+    git \
+    unzip \
+    zlib1g-dev \
+    libzip-dev \
+    libfreetype6-dev \
+    libpng-dev \
+    libjpeg-dev \
+    libicu-dev  \
+    libonig-dev \
+    libxslt1-dev \
+    acl \
+    libxml2-dev \
+    && echo 'alias console="php bin/console"' >> ~/.bashrc
 
-RUN docker-php-ext-configure exif \
-  && docker-php-ext-install exif \
-  && docker-php-ext-configure pgsql -with-pgsql=/usr/local/pgsql \
-  && docker-php-ext-install mbstring zip exif pcntl pdo pdo_pgsql \
-  && docker-php-ext-configure gd \
-  && docker-php-ext-install gd \
-  && docker-php-ext-configure zip \
-  && docker-php-ext-enable exif \
-  && docker-php-ext-enable amqp \
-  && docker-php-ext-enable redis
+RUN docker-php-ext-configure gd --with-jpeg --with-freetype
 
 RUN docker-php-ext-install \
-    pdo pdo_mysql zip xsl gd intl opcache exif mbstring
+    pdo pdo_mysql zip xsl gd intl opcache exif mbstring xml
 
-# Install composer
+
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Expose port 9000 and start php-fpm server
+WORKDIR /var/www/
+
 EXPOSE 9000
-CMD ["php-fpm"]
+#CMD ["php-fpm"]
